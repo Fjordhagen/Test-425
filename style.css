@@ -1,0 +1,22 @@
+body {
+    margin: 0;
+    padding: 0;
+    background-color: #050510;
+    /* Deep space dark blue */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    overflow: hidden;
+    color: #fff;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+#game-container {
+    box-shadow: 0 0 30px rgba(0, 200, 255, 0.1);
+    border: 1px solid #333;
+}
+
+canvas {
+    display: block;
+}
