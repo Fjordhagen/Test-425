@@ -75,15 +75,56 @@ export class Room {
         }
     }
 
-    installSystem(system) {
+    installSystem(system, isImpassable = false) {
+        console.log(`Room at ${this.gridX},${this.gridY} installing system: ${system.name} (Impassable: ${isImpassable})`);
         this.system = system;
         // Visual indicator for system
         const centerX = (this.gridX * this.tileSize) + (this.width * this.tileSize) / 2;
         const centerY = (this.gridY * this.tileSize) + (this.height * this.tileSize) / 2;
 
-        this.sysText = this.scene.add.text(centerX, centerY, system.name.substring(0, 3), {
-            font: '12px monospace', fill: '#000', backgroundColor: '#fff'
-        }).setOrigin(0.5).setDepth(2);
+        let label = system.name.substring(0, 3);
+        let textColor = '#000';
+        let bgColor = '#fff';
+
+        // Custom Visuals based on system type
+        let spriteColor = null;
+
+        if (system.name === 'Shields') { // Powerplant
+            spriteColor = 0xffffff; // White
+            label = "Powerplant"; // Explicit label
+        } else if (system.name === 'Oxygen') {
+            spriteColor = 0x00ff00; // Green
+        } else if (system.name === 'Engines') {
+            spriteColor = 0x000000; // Black
+            label = "ENG";
+            textColor = '#ffffff';
+            bgColor = null;
+        }
+
+        this.sprites.forEach(s => {
+            if (spriteColor !== null) {
+                s.sprite.setFillStyle(spriteColor);
+                s.customColor = spriteColor; // Store for updates
+            }
+        });
+
+        // Text creation with safety for standard styling
+        const style = { font: '12px monospace', fill: textColor };
+        if (bgColor) style.backgroundColor = bgColor;
+
+        this.sysText = this.scene.add.text(centerX, centerY, label, style).setOrigin(0.5).setDepth(2);
+
+        // Make sprites impassable if requested
+        if (isImpassable) {
+            console.log(`Making ${this.sprites.length} sprites impassable for ${system.name} at ${this.gridX},${this.gridY}`);
+            this.sprites.forEach(s => {
+                this.scene.physics.add.existing(s.sprite, true);
+                if (this.ship && this.ship.wallGroup) {
+                    this.ship.wallGroup.add(s.sprite);
+                    console.log("Added system sprite to wallGroup. Body enabled:", s.sprite.body.enable);
+                }
+            });
+        }
     }
 
     updateVisuals() {
@@ -107,8 +148,12 @@ export class Room {
                         });
                     }
 
-                    // Reset floor color just in case (we aren't tinting it anymore)
-                    s.sprite.setFillStyle(this.getColorForType(this.type));
+                    // Only reset color if no custom color is set
+                    if (s.customColor !== undefined) {
+                        s.sprite.setFillStyle(s.customColor);
+                    } else {
+                        s.sprite.setFillStyle(this.getColorForType(this.type));
+                    }
                 }
             }
         });

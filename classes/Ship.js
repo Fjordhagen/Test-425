@@ -38,15 +38,15 @@ export class Ship {
         this.addRoom(6, 6, 12, 3, 'floor');
         this.addRoom(18, 6, 4, 3, 'floor');
         const helm = this.getRoomAt(19, 7);
-        if (helm) helm.installSystem(this.systems.oxygen);
+        if (helm) helm.installSystem(this.systems.oxygen, false);
 
         this.addRoom(6, 3, 3, 3, 'floor');
         const engine = this.getRoomAt(7, 4);
-        if (engine) engine.installSystem(this.systems.engines);
+        // if (engine) engine.installSystem(this.systems.engines); // Removed per request
 
         this.addRoom(6, 9, 3, 3, 'floor');
         const oxy = this.getRoomAt(7, 10);
-        if (oxy) oxy.installSystem(this.systems.engines);
+        // if (oxy) oxy.installSystem(this.systems.engines); // Removed per request
 
         for (let y = 6; y <= 8; y++) {
             this.addRoom(5, y, 1, 1, 'entrance');
@@ -59,8 +59,8 @@ export class Ship {
         this.replaceTileWithRoom(4, 8, 1, 1, 'space');
 
         this.replaceTileWithRoom(5, 4, 1, 1, 'wall');
-        this.replaceTileWithRoom(5, 6, 1, 1, 'wall');
-        this.replaceTileWithRoom(5, 7, 1, 1, 'entrance');
+        this.replaceTileWithRoom(5, 6, 1, 1, 'entrance'); // MOVED from 5,7
+        this.replaceTileWithRoom(5, 7, 1, 1, 'wall'); // ARMORED (was entrance)
         this.replaceTileWithRoom(5, 8, 1, 1, 'wall');
 
         this.replaceTileWithRoom(6, 5, 1, 1, 'wall');
@@ -91,30 +91,39 @@ export class Ship {
         this.replaceTileWithRoom(18, 6, 3, 3, 'floor');
 
         const bridgeTile = this.getRoomAt(19, 7);
-        if (bridgeTile) bridgeTile.installSystem(this.systems.oxygen);
+        if (bridgeTile) bridgeTile.installSystem(this.systems.oxygen, false); // FIX: Bridge should be walkable!
 
-        const bottomRoomTile = this.getRoomAt(7, 10);
-        if (bottomRoomTile) bottomRoomTile.installSystem(this.systems.engines);
-
-        const topRoomTile = this.getRoomAt(7, 4);
-        if (topRoomTile) topRoomTile.installSystem(this.systems.engines);
+        // Engines at 7,10 and 7,4 removed per request
 
         // Create doors
+        this.replaceTileWithRoom(11, 8, 1, 1, 'floor'); // FIX: Ensure floor under door
         this.createDoor(7, 5, 'horizontal');
         this.createDoor(7, 9, 'horizontal');
-        this.createDoor(11, 7, 'vertical');
+        this.createDoor(11, 8, 'vertical'); // Swapped from 11,7
         this.createDoor(16, 8, 'vertical');
         this.createDoor(19, 7, 'vertical'); // Bridge entrance
+        this.createDoor(5, 6, 'vertical');  // Moved to 5,6
 
         // Add walls (armor)
         this.replaceTileWithRoom(11, 6, 1, 1, 'wall');
-        this.replaceTileWithRoom(11, 8, 1, 1, 'wall');
+        this.replaceTileWithRoom(11, 7, 1, 1, 'wall'); // Swapped from 11,8
         this.replaceTileWithRoom(16, 6, 1, 1, 'wall'); // New
         this.replaceTileWithRoom(16, 7, 1, 1, 'wall'); // New
-        this.replaceTileWithRoom(5, 2, 1, 1, 'wall');  // New
-        this.replaceTileWithRoom(9, 2, 1, 1, 'wall');  // New
-        this.replaceTileWithRoom(9, 12, 1, 1, 'wall'); // New
-        this.replaceTileWithRoom(5, 12, 1, 1, 'wall'); // New
+        // SEAL THE PERIMETER (Manual Override)
+        // Left Wall (x=5) - Skip Door at 7
+        for (let y = 2; y <= 12; y++) {
+            if (y !== 6) this.replaceTileWithRoom(5, y, 1, 1, 'wall'); // Skip door at 6
+        }
+
+        // Right Wall of Engine Rooms (x=9)
+        for (let y = 2; y <= 5; y++) this.replaceTileWithRoom(9, y, 1, 1, 'wall'); // Top
+        for (let y = 9; y <= 12; y++) this.replaceTileWithRoom(9, y, 1, 1, 'wall'); // Bottom
+
+        // Top Cap (y=2)
+        for (let x = 6; x <= 8; x++) this.replaceTileWithRoom(x, 2, 1, 1, 'wall');
+
+        // Bottom Cap (y=12)
+        for (let x = 6; x <= 8; x++) this.replaceTileWithRoom(x, 12, 1, 1, 'wall');
 
         // Add missing floor tiles inside ship
         this.replaceTileWithRoom(9, 6, 1, 1, 'floor');
@@ -123,7 +132,7 @@ export class Ship {
         this.replaceTileWithRoom(10, 6, 1, 1, 'floor');
         this.replaceTileWithRoom(10, 7, 1, 1, 'floor');
         this.replaceTileWithRoom(10, 8, 1, 1, 'floor');
-        this.replaceTileWithRoom(11, 7, 1, 1, 'floor');
+        // this.replaceTileWithRoom(11, 7, 1, 1, 'floor'); // Removed (now wall)
 
         // Add floor tiles 6,6 to 6,8
         this.replaceTileWithRoom(6, 6, 1, 1, 'floor');
@@ -167,7 +176,7 @@ export class Ship {
         // Oxygen system moved to 12,6
         const oxygenTile = this.getRoomAt(12, 6);
         if (oxygenTile) {
-            oxygenTile.installSystem(this.systems.oxygen);
+            oxygenTile.installSystem(this.systems.oxygen, true);
             console.log("Oxygen system installed at 12,6");
         }
 
@@ -188,29 +197,105 @@ export class Ship {
         ];
 
         engineTiles.forEach(tile => {
-            if (tile) tile.installSystem(this.systems.engines);
+            if (tile) tile.installSystem(this.systems.engines, true);
         });
         console.log("Engine systems installed at 10 tiles");
 
-        // Power Plant system (6 tiles: 13,6; 13,7; 14,6; 14,7; 15,6; 15,7)
-        const powerPlantTiles = [
-            this.getRoomAt(13, 6),
-            this.getRoomAt(13, 7),
-            this.getRoomAt(14, 6),
-            this.getRoomAt(14, 7),
-            this.getRoomAt(15, 6),
-            this.getRoomAt(15, 7)
+        // Power Plant system (Consolidated 3x2 room at 13,6)
+        this.replaceTileWithRoom(13, 6, 3, 2, 'floor');
+        const powerPlant = this.getRoomAt(13, 6);
+        if (powerPlant) {
+            powerPlant.installSystem(this.systems.shields, true);
+        }
+        console.log("Power Plant system installed at 13,6 (3x2)");
+
+        // Pilot Seat moved to 17,6 (Updated)
+        this.createPilotSeat(17, 6);
+
+        // Bed at 18,8
+        this.createBed(18, 8);
+
+        this.drawGridCoordinates();
+
+        // Check for hull breaches/leaks
+        this.checkHullIntegrity();
+    }
+
+    checkHullIntegrity() {
+        console.log("--- Checking Hull Integrity ---");
+        let leaksFound = 0;
+        const directions = [
+            { x: 0, y: -1 }, { x: 0, y: 1 }, { x: -1, y: 0 }, { x: 1, y: 0 }
         ];
 
-        // Install shields system as Power Plant (reusing shields for now)
-        powerPlantTiles.forEach(tile => {
-            if (tile) tile.installSystem(this.systems.shields);
-        });
-        console.log("Power Plant system installed at 13,6-15,7");
+        // ASCII Dump for Visual Verification
+        let mapString = "\n   012345678901234567890123456789\n";
+        for (let y = 0; y < this.height; y++) {
+            let row = `${y.toString().padStart(2, '0')} `;
+            for (let x = 0; x < this.width; x++) {
+                const val = this.structureGrid[y][x];
+                if (val === 0) row += "."; // Space
+                else if (val === 1) row += "#"; // Wall
+                else if (val === 2) row += "_"; // Floor
+                else row += "?";
+            }
+            mapString += row + "\n";
+        }
+        console.log("Structure Grid Map:" + mapString);
 
-        // Pilot Seat moved to 17,7
-        this.createPilotSeat(17, 7);
-        this.drawGridCoordinates();
+        for (let y = 0; y < this.height; y++) {
+            for (let x = 0; x < this.width; x++) {
+                // If this is a Floor tile (2)
+                if (this.structureGrid[y][x] === 2) {
+                    // Check neighbors
+                    for (let d of directions) {
+                        const nx = x + d.x;
+                        const ny = y + d.y;
+
+                        // Check if out of bounds or Space (0)
+                        if (nx < 0 || nx >= this.width || ny < 0 || ny >= this.height || this.structureGrid[ny][nx] === 0) {
+                            console.warn(`LEAK DETECTED at ${x},${y}! Adjacent to vacuum/bound at ${nx},${ny}`);
+                            leaksFound++;
+
+                            // Visual indicator for leak (Red 'X')
+                            this.scene.add.text(
+                                (x * 32) + 16, (y * 32) + 16, "X",
+                                { font: '20px Arial', fill: '#ff0000', stroke: '#000', strokeThickness: 2 }
+                            ).setOrigin(0.5).setDepth(100);
+                        }
+                    }
+                }
+            }
+        }
+
+        if (leaksFound === 0) {
+            console.log("Hull Integrity: 100% - No leaks detected.");
+        } else {
+            console.warn(`Hull Integrity: CRITICAL - ${leaksFound} leaks detected!`);
+        }
+        console.log("-------------------------------");
+    }
+
+    createBed(x, y) {
+        const bed = this.scene.add.rectangle(
+            (x * 32) + 16,
+            (y * 32) + 16,
+            24, 24,
+            0x00ffff // Cyan/Teal for Bed
+        ).setDepth(1);
+
+        this.scene.add.text(
+            (x * 32) + 16,
+            (y * 32) + 16,
+            "BED",
+            { font: '10px monospace', fill: '#000000' }
+        ).setOrigin(0.5).setDepth(2);
+
+        this.bed = {
+            x: x,
+            y: y,
+            sprite: bed
+        };
     }
 
     createDoor(doorX, doorY, orientation = 'vertical') {
@@ -463,7 +548,7 @@ export class Ship {
     }
 
     simulateOxygen() {
-        const diffusionRate = 0.25;
+        const diffusionRate = 0.1; // Reduced from 0.25 to maintain pressure
         const newGrid = this.o2Grid.map(row => [...row]);
 
         let totalO2 = 0;
@@ -502,9 +587,11 @@ export class Ship {
         }
 
         if (this.systems.oxygen.isActive && this.systems.oxygen.currentPower > 0) {
-            const o2Room = this.rooms.find(r => r.system === this.systems.oxygen);
-            if (o2Room) {
-                const production = this.systems.oxygen.productionRate * 3.0;
+            // FIX: Find ALL rooms with oxygen, not just the first one
+            const o2Rooms = this.rooms.filter(r => r.system === this.systems.oxygen);
+
+            o2Rooms.forEach(o2Room => {
+                const production = this.systems.oxygen.productionRate * 10.0; // Restored to 10.0 (Reasonable boost)
 
                 for (let py = 0; py < o2Room.height; py++) {
                     for (let px = 0; px < o2Room.width; px++) {
@@ -513,7 +600,7 @@ export class Ship {
                         newGrid[gy][gx] = Math.min(100, newGrid[gy][gx] + production);
                     }
                 }
-            }
+            });
         }
 
         if (this.isVenting) {
